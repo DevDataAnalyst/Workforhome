@@ -1,0 +1,33 @@
+
+
+
+
+tsm configuration set -k maestro.input.allowed_paths -v "\\10.8.76.43\Tableau_EDRC\EDRC\Time Sheet Dashboard Final";"\\10.8.76.43\Tableau_EDRC\EDRC\CMPC";"\\10.8.76.42\Tableau\DataForGTS\A Sinha";"\\10.8.144.182\Coal_Ind_Tender_Details";"\\10.8.140.12\kbl_attendance\WISA";"\\10.8.76.43\Tableau_EDRC\EDRC\PRODUCTBU";"\\10.8.76.43\Tableau_KBL\Accounts"
+
+
+
+tsm configuration set -k maestro.output.allowed_paths -v "\\10.8.76.43\Tableau_EDRC\EDRC\Time Sheet Dashboard Final";
+"\\10.8.76.43\Tableau_EDRC\EDRC\CMPC";"\\10.8.76.42\Tableau\DataForGTS\A Sinha";"\\10.8.144.182\Coal_Ind_Tender_Details";
+"\\10.8.140.12\kbl_attendance\WISA";"\\10.8.76.43\Tableau_EDRC\EDRC\PRODUCTBU";"\\10.8.76.43\Tableau_KBL\Accounts"
+
+tsm configuration set -k maestro.output.allowed_paths -v "*"
+
+tsm pending-changes apply
+
+
+tsm configuration get -k maestro.input.allowed_paths
+tsm configuration get -k maestro.output.allowed_paths
+
+tsm maintenance backup -f LnT_TableauDevServer.tsbak -d 
+
+tabcmd login -s http://10.8.72.57 -u Tabadmin -p T@bleau123  
+
+//use this to enable TLS
+
+tsm configuration set -k svcmonitor.notification.smtp.ssl_enabled -v true
+
+tsm maintenance cleanup
+
+tsm email test-smtp-connection
+
+
