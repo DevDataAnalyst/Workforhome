@@ -1,0 +1,20 @@
+from pyspark.sql import SparkSession
+
+# create a SparkSession
+spark = SparkSession.builder.appName("ShowTablesInfo").getOrCreate()
+
+# set the database
+spark.catalog.setCurrentDatabase("default")
+
+# get all tables
+tables = spark.catalog.listTables()
+
+# loop through tables and display database, table, and location
+for table in tables:
+    database = table.database
+    name = table.name
+    location = spark.sql(f"DESCRIBE EXTENDED {name}").filter("Location").select("data_type").collect()[0][0]
+    print(f"Database: {database}, Table: {name}, Location: {location}")
+
+# stop the SparkSession
+spark.stop()
