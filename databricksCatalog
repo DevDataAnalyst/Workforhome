@@ -3,26 +3,36 @@ from pyspark.sql import SparkSession, Row
 # create a SparkSession
 spark = SparkSession.builder.appName("ShowTablesInfo").getOrCreate()
 
-# set the database
-spark.catalog.setCurrentDatabase("default")
+# get all databases in the workspace that start with "edap"
+databases = [database.name for database in spark.catalog.listDatabases() if database.name.startswith("edap")]
 
-# get all tables
-tables = spark.catalog.listTables()
+# loop through each database and retrieve the table information
+for database in databases:
+    print(f"Tables in database {database}:")
 
-# create a list of dictionaries containing the table information
-table_info = []
-for table in tables:
-    if table.tableType == 'MANAGED' or table.tableType == 'EXTERNAL':
-        database = table.database
-        name = table.name
-        location = spark.sql(f"DESCRIBE EXTENDED {name}").filter("Location").select("data_type").collect()[0][0]
-        table_info.append({"Database": database, "Table": name, "Location": location})
+    # set the current database
+    spark.catalog.setCurrentDatabase(database)
 
-# create a DataFrame from the list of dictionaries
-df = spark.createDataFrame([Row(**x) for x in table_info])
+    # check if there are tables in the database
+    if len(spark.catalog.listTables()) == 0:
+        print("No tables found in the database.")
+    else:
+        # get all tables
+        tables = spark.catalog.listTables()
 
-# show the DataFrame
-df.show()
+        # create a list of dictionaries containing the table information
+        table_info = []
+        for table in tables:
+            if table.tableType == 'MANAGED' or table.tableType == 'EXTERNAL':
+                name = table.name
+                location = spark.sql(f"DESCRIBE EXTENDED {name}").filter("Location").select("data_type").collect()[0][0]
+                table_info.append({"Database": database, "Table": name, "Location": location})
+
+        # create a DataFrame from the list of dictionaries
+        df = spark.createDataFrame([Row(**x) for x in table_info])
+
+        # show the DataFrame
+        df.show()
 
 # stop the SparkSession
 spark.stop()
