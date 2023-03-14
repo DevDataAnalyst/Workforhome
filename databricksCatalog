@@ -1,4 +1,4 @@
-from pyspark.sql import SparkSession
+from pyspark.sql import SparkSession, Row
 
 # create a SparkSession
 spark = SparkSession.builder.appName("ShowTablesInfo").getOrCreate()
@@ -9,12 +9,20 @@ spark.catalog.setCurrentDatabase("default")
 # get all tables
 tables = spark.catalog.listTables()
 
-# loop through tables and display database, table, and location
+# create a list of dictionaries containing the table information
+table_info = []
 for table in tables:
-    database = table.database
-    name = table.name
-    location = spark.sql(f"DESCRIBE EXTENDED {name}").filter("Location").select("data_type").collect()[0][0]
-    print(f"Database: {database}, Table: {name}, Location: {location}")
+    if table.tableType == 'MANAGED' or table.tableType == 'EXTERNAL':
+        database = table.database
+        name = table.name
+        location = spark.sql(f"DESCRIBE EXTENDED {name}").filter("Location").select("data_type").collect()[0][0]
+        table_info.append({"Database": database, "Table": name, "Location": location})
+
+# create a DataFrame from the list of dictionaries
+df = spark.createDataFrame([Row(**x) for x in table_info])
+
+# show the DataFrame
+df.show()
 
 # stop the SparkSession
 spark.stop()
